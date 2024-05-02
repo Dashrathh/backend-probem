@@ -10,7 +10,7 @@ import mongoose from "mongoose";
 
 
     } catch (error){
-        console.log("MONGODB connection eror bhai",error);
+        console.log("MONGODB connection eror he  bhai",error);
         process.exit(1)
     }
  }
