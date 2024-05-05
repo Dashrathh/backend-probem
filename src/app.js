@@ -15,4 +15,14 @@ app.use(express.static("public"))   // static work file folder store
 app.use(cookieParser())
 
 
+
+// routes
+
+import userRouter from './routes/user.routes.js'
+
+// routes declaration
+app.use("/api/v1/users" ,userRouter)   // this is middleware here use (/user , userRoute means kon sa router export karana he)
+
+// http://localhost:8000/api/v1/users/register
+
 export { app }
