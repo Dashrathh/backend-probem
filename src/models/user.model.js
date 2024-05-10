@@ -1,37 +1,9 @@
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import mongoose , {Schema} from "mongoose";
 
-import jwt from "jsonwebtoken"
-import bcrypt from "bcrypt"
+import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 
 
 const userSchema = new Schema(
@@ -88,7 +60,7 @@ userSchema.pre("save", async function (next) {   // pre after ("save is event me
 
   if(! this.isModified("password")) return next();  // if password not modified so return next meand direct bahar 
 
-  this.password  = bcrypt.hash(this.password, 10)  // here 10 is round
+  this.password  = await bcrypt.hash(this.password, 10)  // here 10 is round
   next() 
 
 

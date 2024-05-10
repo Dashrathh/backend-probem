@@ -16,13 +16,18 @@ app.use(cookieParser())
 
 
 
-// routes
+// routes   means rasta
 
 import userRouter from './routes/user.routes.js'
 
 // routes declaration
-app.use("/api/v1/users" ,userRouter)   // this is middleware here use (/user , userRoute means kon sa router export karana he)
+
+app.use('/api/v1/users', userRouter);
+ // Use the user routes
+  // this is middleware here use (/user , userRoute means kon sa router export karana he)
 
 // http://localhost:8000/api/v1/users/register
+
+
 
 export { app }
