@@ -161,6 +161,7 @@ const loginUser = asyncHandler(async (req, res) => {
     //  5: Access and refresh token generate
 
     const { accessToken, refreshToken } = await generateAccesAndRefreshTokens(user._id)
+    
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
 
     const option = {
@@ -220,7 +221,7 @@ const refreshAceessToken = asyncHandler(async (req, res) => {
 
     {
         const incomingrefrehToken = req.cookies.refreshToken || req.body.refreshToken
-        if (incomingrefrehToken) {
+        if (!incomingrefrehToken) {
             throw new ApiError(401, "unauthorized request")
         }
 
