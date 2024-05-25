@@ -6,6 +6,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cludinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken"
+import { response } from "express";
 
 //  +=+: access and refrsh token generate
 
@@ -277,11 +278,152 @@ const refreshAceessToken = asyncHandler(async (req, res) => {
 })
 
 
+// =========================================   chnage the passsword if user want  ===========================================================
+
+
+  const changeCurrentPassword = asyncHandler(async(req,res) =>{
+
+     const {oldPassword , newPassword} = req.body   /// take field from user
+    //  user ko find kiya user.findById(req di .user ho to uski id do)
+
+   const user = await User.findById(req.user?._id)  
+
+// user agar password ko change karna chahta he 
+// to use old password dalna padega but kaha
+//  to hamne isPassworcorrectd method li jo hamne define ki thi user model me
+
+  const isPasswordCorrect =  await  user.isPasswordCorrect(oldPassword)   // here isPassword correct method take from user model uske baad usme use hamne oldPassword diya
+
+
+    if (!isPasswordCorrect) {
+        throw new ApiError(400 , "Invalid old password")
+    }
+ 
+
+     // ab naya password set karna hai
+
+    user.password = newPassword
+
+    await user.save({validateBeforeSave:false})
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200,{}, "Password change successfully"))
+  })
+
+
+
+//     get current uset 
+
+const getCurrentUser = asyncHandler(async(req, res) =>{
+
+    return res
+    .status(200)
+    .json(200, req.user, "current user fetched successfully")
+
+})
+
+   const updateAccountDetails = asyncHandler(async(req,res) =>{
+    const {fullname , email} = req.body
+
+    if(!fullname || !email){
+        throw new ApiError(400 , "All field are required")
+    }
+     
+   const user =  User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set : {
+                fullName: fullname,
+                email:email
+
+            }
+        },
+
+        {new: true},
+    )
+
+    .select("-password")
+
+    return  res
+    .status(200)
+    .json(new ApiResponse(200 , user, "Account detalid updated successfully"))
+
+   })
+
+
+     // Update avatar
+    
+      const updateUserAvatar = asyncHandler(async(req,res) =>{
+      const avatarLocalPath  =  req.file?.path
+
+      if (!avatarLocalPath) {
+        throw new ApiError(400 , "Avatar files is missing")
+      }
+
+    const avatar = await  uploadOnCloudinary(avatarLocalPath)
+
+    if (!avatar.url) {
+        throw new ApiError(400, "Error while uploading on avatar")
+    }
+
+     const user =  await User.findByIdAndUpdate(req.user?._id,
+        {
+            $set:{
+                avatar: avatar.url
+            }
+        },
+        {new: true}
+     ).select("-password")
+     return response
+     .status(200)
+     .json(
+        new ApiResponse(200 , "Avatar image uploding successfully")
+     )
+      })
+
+
+
+      //  cover Image
+      const updateUserCoverImage = asyncHandler(async(req,res) =>{
+        const coverImageLocalPath  =  req.file?.path
+  
+        if (!coverImageLocalPath) {
+          throw new ApiError(400 , "cover image files is missing")
+        }
+  
+      const coverImage = await  uploadOnCloudinary(coverImageLocalPath)
+  
+      if (!coverImage.url) {
+          throw new ApiError(400, "Error while uploading on avatar")
+      }
+  
+      const user = await User.findByIdAndUpdate(
+          req.user?._id,
+          {
+              $set:{
+                  coverImage: coverImage.url
+              }
+          },
+          {new: true}
+       ).select("-password")
+       return response
+       .status(200)
+       .json(
+          new ApiResponse(200 ,"Cover image updated successfully")
+       )
+  
+       
+        })
+
 export {
     registerUser,
     loginUser,
     logoutUser,
-    refreshAceessToken
+    refreshAceessToken,
+    changeCurrentPassword,
+    getCurrentUser,
+    updateUserAvatar
 };
 
 
