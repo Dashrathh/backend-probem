@@ -7,6 +7,7 @@ import { uploadOnCloudinary } from "../utils/cludinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken"
 import { response } from "express";
+import mongoose from "mongoose";
 
 //  +=+: access and refrsh token generate
 
@@ -27,9 +28,6 @@ const generateAccesAndRefreshTokens = async (userId) => {
         throw new ApiError(500, "Something went wrong");
     }
 };
-
-
-
 
 // ===== Register user ======
 
@@ -63,13 +61,13 @@ const registerUser = asyncHandler(async (req, res) => {
     if (existedUser) {
         throw new ApiError(409, "User with email or username already exists");
     }
-
     console.log(req.files);
 
     // step 4: check for images, check for avatar
     const avtarLocalPath = req.files?.avatar[0]?.path; // ? is a show option
     // const coverImageLocalPath = req.files?.coverImage[0]?.path;
-
+      
+    // Upload them to cloudinary, avatar
 
     let coverImageLocalPath;
     if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage[0]?.path)
@@ -80,15 +78,18 @@ const registerUser = asyncHandler(async (req, res) => {
         }
 
     // step 5: upload them to cloudinary, avatar
+
     const avatar = await uploadOnCloudinary(avtarLocalPath);
     const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
     // step 5.1: check if avatar upload failed
+
     if (!avatar) {
         throw new ApiError(400, "Avatar file upload failed");
     }
 
     // step 6: create user object - create entry in db
+
     const user = await User.create({
         fullname,
         avatar: avatar.url,
@@ -96,9 +97,11 @@ const registerUser = asyncHandler(async (req, res) => {
         email,
         password,
         username: username.toLowerCase()
+        
     });
 
     // step 7: check for user creation
+
     const createdUser = await User.findById(user._id).select("-password -refreshToken");
 
     if (!createdUser) {
@@ -106,6 +109,7 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     // step 9: return response
+
     return res.status(201).json(
         new ApiResponse(200, createdUser, "User registered successfully")
     );
@@ -186,6 +190,8 @@ const loginUser = asyncHandler(async (req, res) => {
         )
 })
 
+   //=============== logout user================
+
 const logoutUser = asyncHandler(async (req, res) => {
 
     await User.findByIdAndDelete(
@@ -216,7 +222,7 @@ const logoutUser = asyncHandler(async (req, res) => {
 
 })
 
-// refreshtoken and accessToken endpoint
+// ========================== refreshtoken and accessToken endpoint=====================================
 
 const refreshAceessToken = asyncHandler(async (req, res) => {
 
@@ -278,7 +284,7 @@ const refreshAceessToken = asyncHandler(async (req, res) => {
 })
 
 
-// =========================================   chnage the passsword if user want  ===========================================================
+// =================================Chnage the passsword if user want  ===========================================================
 
 
   const changeCurrentPassword = asyncHandler(async(req,res) =>{
@@ -323,6 +329,8 @@ const getCurrentUser = asyncHandler(async(req, res) =>{
 
 })
 
+   // updateDetails user name email 
+
    const updateAccountDetails = asyncHandler(async(req,res) =>{
     const {fullname , email} = req.body
 
@@ -330,7 +338,7 @@ const getCurrentUser = asyncHandler(async(req, res) =>{
         throw new ApiError(400 , "All field are required")
     }
      
-   const user =  User.findByIdAndUpdate(
+   const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set : {
@@ -352,7 +360,7 @@ const getCurrentUser = asyncHandler(async(req, res) =>{
    })
 
 
-     // Update avatar
+     //==============Update avatar file===============
     
       const updateUserAvatar = asyncHandler(async(req,res) =>{
       const avatarLocalPath  =  req.file?.path
@@ -361,6 +369,18 @@ const getCurrentUser = asyncHandler(async(req, res) =>{
         throw new ApiError(400 , "Avatar files is missing")
       }
 
+
+      // delete 
+      
+     const oldAvatarUrl = user.avatar
+
+     if(oldAvatarUrl){
+         const oldvatarID  = oldAvatarUrl.split('/').pop().split()[0];
+     await Cloudinary.uploader.dest
+         console.log(oldvatarID);
+ 
+     
+     }
     const avatar = await  uploadOnCloudinary(avatarLocalPath)
 
     if (!avatar.url) {
@@ -380,7 +400,9 @@ const getCurrentUser = asyncHandler(async(req, res) =>{
      .json(
         new ApiResponse(200 , "Avatar image uploding successfully")
      )
+
       })
+
 
 
 
@@ -392,7 +414,7 @@ const getCurrentUser = asyncHandler(async(req, res) =>{
           throw new ApiError(400 , "cover image files is missing")
         }
   
-      const coverImage = await  uploadOnCloudinary(coverImageLocalPath)
+      const coverImage = await uploadOnCloudinary(coverImageLocalPath)
   
       if (!coverImage.url) {
           throw new ApiError(400, "Error while uploading on avatar")
@@ -415,7 +437,151 @@ const getCurrentUser = asyncHandler(async(req, res) =>{
   
        
         })
+      
+    
 
+
+
+        // 
+        //   Aggregation
+
+         const getUserChannelProfile = asyncHandler(async(req,res) =>{
+        
+             const {username} = req.params  // param use url when you want data from user
+
+             if (!username?.trim()) {
+                throw new ApiError(400, "username is missing")
+                
+             }
+
+             // here we can find 
+
+            //  User.find({username})  // after that you add aggregation pipline but here sort way 
+
+             const channel =  await User.aggregate([
+                {
+                    $match:{
+                        username:username?.toLowerCase()
+                    }
+                },
+                {
+                    $lookup:{
+                        from:"subscription",     // lookup use two different collection join
+                        localField:"_id",
+                        foreignField:"channel",   // when you select chnnel to subcriber milega  thats all    // and when you select subcriber  to milegi channel
+                        as: "subcribers"
+                    }
+                },
+                 {
+                    $lookup:{
+                        from:"subscription",
+                        localField:"_id",
+                        foreignField:"subscriber",   // when you select chnnel to subcriber milega  thats all    // and when you select subcriber  to milegi channel
+                        as: "subscribedTo"
+                    }
+                 },
+                 {
+                    $addFields:{
+                        subscribersCount:{
+                            $size:"$subcribers"
+                        },
+                        channelsSubscribedToCount:{
+                            $size: "$subcribedTo"
+                        },
+                        isSubscribed:{
+                             $cond:{
+                                if:{$in:[req.user?._id, "subcribers.subscriber"]},
+                                then:true,
+                                else:false
+                             }
+                        }
+                    }
+                 },
+                 {
+                    $project:{
+                        fullname:1,   // project sari vallue nahi bdeta selected deta he jab hame selected value chaiye tab project use hota h
+                        username:1,
+                        subscribersCount:1,
+                        channelsSubscribedToCount:1,
+                        avatar:1,
+                        coverImage:1,
+                        email:1
+                    }
+                 }
+
+               ])
+      
+
+         if (!channel?.length) {
+            throw new ApiError(404," channel doesnot exist");
+         }
+
+         return res
+         .status(200)
+         .json(
+            new ApiResponse(200,channel[0],"User channel fetched successfully")
+         )
+        
+        })
+ 
+        //   get watch hiestrory
+
+       const getWatchHisory = asyncHandler(async(req,res) =>{
+
+        // req.user._id  // ye mogodb ki id nahi milti he ye mongoose ki string milti jo mongoose aoutomatically convert kar deta h
+
+    const user = await User.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+            {
+                $lookup:{
+                    from:"vedeos",
+                    localField:"watchHistory",
+                    foreignField:"_id",
+                    as:"watchHistory",
+                    pipeline:[
+                        {
+                            $lookup: {
+                                from : "users",
+                                localField: "owner",
+                                foreignField:"_id",
+                                as: "owner",
+                                pipeline:[
+                                {
+                                    $project:{
+                                        fullName: 1,
+                                        username:1,
+                                        avatar:1
+                                    }
+                                },
+                                {
+                                   $addFields:{
+                                    owner:{
+                                        $first: "$owner"
+                                    }
+                                   } 
+                                }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        
+    ])
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,user[0].WatchHisory ,"watchHistory fetched successfully")
+        
+        // aggregation return array so here use user[0] it return first
+    )
+       })
+       
+ 
 export {
     registerUser,
     loginUser,
@@ -423,10 +589,10 @@ export {
     refreshAceessToken,
     changeCurrentPassword,
     getCurrentUser,
-    updateUserAvatar
+    updateUserAvatar,
+    updateUserCoverImage,
+    getUserChannelProfile,
+    updateAccountDetails,
+    getWatchHisory
 };
-
-
-
-
 

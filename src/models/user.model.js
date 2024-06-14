@@ -60,6 +60,7 @@ userSchema.pre("save", async function (next) {
 });
 
 // Method to check if the password is correct
+
 userSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
@@ -75,7 +76,7 @@ userSchema.methods.generateAccessToken = function () {
       username: this.username,
       fullname: this.fullname,
     },
-    process.env.ACCESS_TOKEN_SCRET,
+    process.env.ACCESS_TOKEN_SECRET,
     {
       expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
     }
@@ -97,5 +98,8 @@ userSchema.methods.generateRefreshToken = function () {
     }
   );
 };
+
+
+
 
 export const User = mongoose.model("User", userSchema);
