@@ -64,7 +64,10 @@ const registerUser = asyncHandler(async (req, res) => {
     console.log(req.files);
 
     // step 4: check for images, check for avatar
-    const avtarLocalPath = req.files?.avatar[0]?.path; // ? is a show option
+    const avtarLocalPath = req.files?.avatar?.[0]?.path
+
+
+   // ? is a show option
     // const coverImageLocalPath = req.files?.coverImage[0]?.path;
       
     // Upload them to cloudinary, avatar
@@ -85,7 +88,7 @@ const registerUser = asyncHandler(async (req, res) => {
     // step 5.1: check if avatar upload failed
 
     if (!avatar) {
-        throw new ApiError(400, "Avatar file upload failed");
+        throw new ApiError(400, "DSAvatar file upload failed");
     }
 
     // step 6: create user object - create entry in db
@@ -143,7 +146,7 @@ const loginUser = asyncHandler(async (req, res) => {
     //  User.findOne({email})   // basic case ya email or username
 
 
-    // 3: find the user  
+    // 3: find the user  er
     const user = await User.findOne({
         $or: [{ username }, { email }]
     })
@@ -363,7 +366,7 @@ const getCurrentUser = asyncHandler(async(req, res) =>{
      //==============Update avatar file===============
     
       const updateUserAvatar = asyncHandler(async(req,res) =>{
-      const avatarLocalPath  =  req.file?.path
+      const avatarLocalPath  =  req.files?.path
 
       if (!avatarLocalPath) {
         throw new ApiError(400 , "Avatar files is missing")
@@ -468,10 +471,12 @@ const getCurrentUser = asyncHandler(async(req, res) =>{
                     $lookup:{
                         from:"subscription",     // lookup use two different collection join
                         localField:"_id",
-                        foreignField:"channel",   // when you select chnnel to subcriber milega  thats all    // and when you select subcriber  to milegi channel
+                        foreignField:"channel",   // when you select chnnel to subcriber milega  thats all  
+                                              // and when you select subcriber  to milegi channel
                         as: "subcribers"
                     }
                 },
+                
                  {
                     $lookup:{
                         from:"subscription",

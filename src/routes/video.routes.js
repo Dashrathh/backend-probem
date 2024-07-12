@@ -1,4 +1,4 @@
-import { Router } from "express";
+ import { Router } from "express";
 
 import {
     getAllVideos,
@@ -6,7 +6,7 @@ import {
     getVideoById,
     upadateVideo,
     deleteVideo
-} from '../controllers/vedio.controller.js'
+} from '../controllers/video.controller.js'
 
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";

@@ -14,7 +14,6 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
         if (!token) {
 
             throw new ApiError(401, "Unauthorize request")
-
         }
         const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
@@ -22,21 +21,19 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
         // data base id connection
 
         const user = await User.findById(decodedToken?._id).select(
-            "-password  - refreshToken"
-        )
+            "-password  -refreshToken"
+        );
 
         if (!user) {
             throw new ApiError(401, "Invalid Access Token")
-
         }
         //  req ni andar ek naya object add kar dete hai
         req.user = user;
         next();
 
     } catch (error) {
-
         // If any error occurs , throw an unauthorized error
         throw new ApiError(402, error?.message || "Invalid access token")
     };
-    console.log(error);
-})
+    // console.log(error);
+});

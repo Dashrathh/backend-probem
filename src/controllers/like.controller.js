@@ -15,7 +15,7 @@ import { Video } from "../models/video.model.js";
 
 
 
-const toggleviedoLike  = asyncHandler(async(req,res) =>{
+const toggleVideoLike   = asyncHandler(async(req,res) =>{
     const {videoId} = req.params
     
     const {userid}  = req.user_id
@@ -31,8 +31,5 @@ const toggleviedoLike  = asyncHandler(async(req,res) =>{
     }
      
     //  toggle 
-
-    video.Like = !video.Like
-    await video.save()
 })
  
