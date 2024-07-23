@@ -7,14 +7,14 @@ import {
 } from "../controllers/subscription.controller.js"
 
 import { verifyJWT } from "../middlewares/auth.middleware.js";
+   
 
-const subscription = Router()
-    
-subscription.route('/toggle/:channelId').post(toggleSubscription);
+   const router = Router();
+   router.use(verifyJWT);
+   
+   router.route("/c/:channelId").post(toggleSubscription)
+   router.route("/u/:channelId").get(getUserChannelSubscribers)
+   router.route("/c/:subscriberId").get(getSubscribedChannels)
 
-subscription.route('/subscribers').get(getUserChannelSubscribers);
 
-subscription.route('./subscriptions').get(getSubscribedChannels);
-
-
-export default subscription;
+export default router;

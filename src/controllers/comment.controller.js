@@ -50,7 +50,7 @@ const getVideoComment = asyncHandler(async (req, res) => {
             throw new ApiError(400, "comment not created")
         }
         return res.status(200).json(new ApiResponse(201),newcomment,"Comment add successfully")
-     })
+     });
 
 //   Fetch comment using aggregation pipeline
   
@@ -87,9 +87,7 @@ const deletingComment = asyncHandler(async (req, res) => {
     if (!isValidObjectId(commentId)) {
         throw new ApiError(400, "Invalid comment ID");
     }
-
     const deletedComment = await Comment.findByIdAndDelete(commentId)
-
     if (!deletedComment) {
         throw new ApiError(400, "Comment not deleted")
     }
